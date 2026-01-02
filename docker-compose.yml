@@ -1,0 +1,54 @@
+services:
+  mysql:
+    image: mysql:8.0
+    container_name: chat_mysql
+    environment:
+      MYSQL_ROOT_PASSWORD: 12345678
+      MYSQL_DATABASE: chat_db
+    ports:
+      - "3306:3306"
+    volumes:
+      - mysql_data:/var/lib/mysql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: chat_api
+    ports:
+      - "4000:4000"
+    environment:
+      NODE_ENV: development
+      PORT: 4000
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_NAME: chat_db
+      DB_USER: root
+      DB_PASSWORD: 12345678
+      JWT_SECRET: jshdfvwEUFHSBFUWEFBWEFWEUFWEFFBWE
+      JWT_ACCESS_EXPIRY: 15m
+      JWT_REFRESH_SECRET: SECRETKEYSECRETKEYSECRETKEY
+      JWT_REFRESH_EXPIRY: 7d
+      CORS_ORIGIN: "*"
+      RATE_LIMIT_WINDOW_MS: 900000
+      RATE_LIMIT_MAX_REQUESTS: 100
+      UPLOAD_DIR: ./uploads/profile-pictures
+      ALLOWED_FILE_TYPES: image/jpeg,image/png
+      MAX_FILE_SIZE: 5242880
+    volumes:
+      - .:/app
+      - /app/node_modules
+      - ./uploads:/app/uploads
+    depends_on:
+      mysql:
+        condition: service_healthy
+    command: npm run dev
+
+volumes:
+  mysql_data:
+
